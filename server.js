@@ -3,6 +3,8 @@ const cors = require("cors");
 const axios = require("axios");
 const { Aptos } = require("@aptos-labs/ts-sdk");
 
+//created node backend completed backedn code interagret Aptos init 
+
 const app = express();
 const PORT = 3000;
 
