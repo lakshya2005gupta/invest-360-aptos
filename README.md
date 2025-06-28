@@ -7,7 +7,9 @@ bank fds and rds
 govenment bonds 
 digital gold 
 and the main investing in PRE IPO
- 
+
+
+*** user can track all of their investments in single platform -> INVEST360 ***
 
 
 
