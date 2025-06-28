@@ -40,6 +40,8 @@ function App() {
            <Route path="/investment-experience" element={<InvestmentExperience/>}/>
            <Route path="/investment-area" element={<InvestmentArea/>}/>
           </Routes>
+
+{/*            </BrowserRouter>> */}
           {/* <InvestmentArea/>
           <InvestmentExperience/> */}
           <Cards/>
