@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Dashboard</title>
+  <link rel="stylesheet" href="portdisp.css">
+</head>
+<body>
+  <div class="container">
+    <h2 id="total-portfolio-value" style="display: none;"></h2>
+    <div id="loading" style="display: none;">Loading...</div>
+    <div id="portfolio-details">Please wait for your portfolio details</div>
+  </div>
+
+  <script>
+    async function fetchPortfolio(pan) {
+      document.getElementById("loading").style.display = "block";
+      try {
+        const response = await fetch("http://127.0.0.1:5000/getPortfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pan })
+        });
+        const data = await response.json();
+
+        if (data.error || !data.assets) {
+          document.getElementById("portfolio-details").innerHTML = `<p class="error">${data.error || "No portfolio data available."}</p>`;
+        } else {
+          displayPortfolio(data);
+        }
+      } catch (error) {
+        document.getElementById("portfolio-details").innerHTML = "<p class='error'>Error fetching portfolio.</p>";
+      } finally {
+        document.getElementById("loading").style.display = "none";
+      }
+    }
+
+    function displayPortfolio(data) {
+      let container = document.getElementById("portfolio-details");
+      let html = "";
+
+      let totalPortfolioElement = document.getElementById("total-portfolio-value");
+      totalPortfolioElement.style.display = "block";
+      totalPortfolioElement.innerHTML = `Your Portfolio Value: <strong>₹${Math.round(Number(data.total_portfolio_value)).toLocaleString()}</strong>`;
+
+      const categoryOrder = ["Stocks", "Mutual Funds", "ETF", "Government Schemes", "Fixed Deposits", "Recurring Deposits"];
+      let sortedAssets = categoryOrder.map(category => data.assets[category]).filter(Boolean);
+
+      sortedAssets.forEach((details, idx) => {
+        const category = categoryOrder[idx];
+        html += `<h3>${category} (Total: ₹${Math.round(Number(details.total_value)).toLocaleString()})</h3>`;
+        html += `<table border="1"><tr>`;
+
+        let keys = Object.keys(details.holdings[0] || {});
+
+        const nameKey = keys.find(k => ["name", "type", "scheme", "bank"].includes(k));
+        const valueKey = keys.find(k => ["total_value", "maturity_value"].includes(k));
+
+        // For some categories, remove the total_value from the keys to avoid duplication.
+        const hideTotalValue = ["Fixed Deposits", "Recurring Deposits", "Government Schemes"].includes(category);
+        if (hideTotalValue) {
+          keys = keys.filter(key => key !== "total_value");
+        }
+
+        keys = [nameKey, ...keys.filter(k => k !== nameKey && k !== valueKey), valueKey].filter(Boolean);
+
+        keys.forEach(key => {
+          html += `<th>${key.replace(/_/g, " ").toUpperCase()}</th>`;
+        });
+
+        html += `</tr>`;
+
+        // Sort the holdings in descending order by total_value
+        details.holdings.sort((a, b) => b.total_value - a.total_value);
+
+        details.holdings.forEach(item => {
+          html += `<tr>`;
+          keys.forEach(key => {
+            let value = item[key];
+            // For total_value display, round to integer
+            if (key === "total_value") {
+              value = `₹${Math.round(Number(value)).toLocaleString()}`;
+            }
+            html += `<td>${value}</td>`;
+          });
+          html += `</tr>`;
+        });
+
+        html += `</table><br>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let pan = urlParams.get("pan");
+      if (pan) {
+        pan = pan.toUpperCase();
+        fetchPortfolio(pan); // Initial load
+        setInterval(() => fetchPortfolio(pan), 600000); // Auto-refresh every 10 minutes
+      } else {
+        document.getElementById("portfolio-details").innerHTML = "<p class='error'>No PAN found. Please log in again.</p>";
+      }
+    };
+  </script>
+</body>
+</html>

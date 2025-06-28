@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-IPO Tokenization with Aptos</title>
+    <script src="https://unpkg.com/@aptos-labs/wallet-adapter-core"></script>
+    <script src="https://unpkg.com/@aptos-labs/wallet-adapter-petra"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@aptos-labs/aptos"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>Pre-IPO Investment</h2>
+        <p>Connect your Aptos wallet & invest in tokenized Pre-IPO shares.</p>
+
+        <button onclick="connectWallet()">Connect Wallet</button>
+        <p id="walletAddress"></p>
+
+        <label for="pan-input">Enter PAN Number:</label>
+        <input type="text" id="pan-input" placeholder="Enter PAN">
+
+        <button onclick="fetchPortfolio()">Fetch Balance</button>
+        <p class="balance">Wallet Balance: <span id="wallet-balance">Loading...</span></p>
+
+        <label for="preipo">Select Pre-IPO Company:</label>
+        <select id="preipo" onchange="updatePrice()">
+            <option value="" disabled selected>Choose a company</option>
+            <option value="Onix Renewable Ltd" data-price="250">Onix Renewable Ltd</option>
+            <option value="JSW Cement" data-price="180">JSW Cement</option>
+            <option value="Blackstone-Sattva Joint Venture" data-price="300">Blackstone-Sattva Joint Venture</option>
+        </select>
+
+        <p>Selected Share Price: ₹<span id="share-price">0</span></p>
+
+        <label for="investment">Investment Amount (₹):</label>
+        <input type="number" id="investment" placeholder="Enter amount">
+
+        <button onclick="tokenizeInvestment()">Tokenize Investment</button>
+
+        <p class="tokens" id="tokenDisplay"></p>
+    </div>
+
+    <script>
+        window.onload = async () => {
+            while (!window.aptos) {
+                console.log("Waiting for Petra Wallet...");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            console.log("Petra Wallet Detected:", window.aptos);
+        };
+    
+        let walletAddress = "";
+    
+        async function connectWallet() {
+            if (!window.aptos) {
+                alert("Petra Wallet not detected! Try refreshing or reinstalling.");
+                return;
+            }
+
+            try {
+                console.log("Attempting to connect to Petra Wallet...");
+                const wallet = await window.aptos.connect();
+                const account = await window.aptos.account();
+
+                if (account && account.address) {
+                    walletAddress = account.address;
+                    document.getElementById("walletAddress").innerText = `Connected: ${walletAddress}`;
+                    
+                    // Fetch balance after setting wallet address
+                    await fetchWalletBalance(walletAddress);
+                } else {
+                    console.error("No wallet address found.");
+                    alert("Failed to retrieve wallet address.");
+                }
+            } catch (error) {
+                console.error("Wallet connection failed:", error);
+                alert("Failed to connect wallet.");
+            }
+        }
+
+        async function fetchWalletBalance(address) {
+            if (!address) {
+                console.error("fetchWalletBalance: Wallet address is undefined!");
+                document.getElementById("wallet-balance").textContent = "Error";
+                return;
+            }
+
+            try {
+                // Use Aptos Testnet API
+                const apiUrl = `https://fullnode.testnet.aptoslabs.com/v1/accounts/${address}/resources`;
+                console.log("Fetching balance from:", apiUrl);
+
+                const response = await fetch(apiUrl);
+                console.log("HTTP Status:", response.status);
+                
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                const data = await response.json();
+                console.log("API Response Data:", data);
+
+                // Find balance data
+                const balanceData = data.find(r => r.type.includes("0x1::coin::CoinStore"));
+
+                if (balanceData && balanceData.data && balanceData.data.coin) {
+                    const balance = balanceData.data.coin.value / 1e8;
+                    document.getElementById("wallet-balance").textContent = balance.toFixed(2) + " APT";
+                    console.log("Wallet Balance:", balance);
+                } else {
+                    console.warn("No balance data found, setting balance to 0.");
+                    document.getElementById("wallet-balance").textContent = "0.00 APT";
+                }
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+                document.getElementById("wallet-balance").textContent = "Error";
+            }
+        }
+
+        async function fetchPortfolio() {
+            const pan = document.getElementById("pan-input").value.trim().toUpperCase();
+            if (!pan) {
+                alert("Please enter a valid PAN number.");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/getPortfolio", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pan: pan }),
+                });
+
+                const data = await response.json();
+                console.log("Portfolio API Response:", data);
+
+                if (response.ok) {
+                    if (data.wallet_balance !== undefined) {
+                        document.getElementById("wallet-balance").textContent = 
+                            `₹${Number(data.wallet_balance).toFixed(2)}`;
+                    } else if (data.total_portfolio_value !== undefined) {
+                        document.getElementById("wallet-balance").textContent = 
+                            `₹${Number(data.total_portfolio_value).toFixed(2)}`;
+                    } else {
+                        alert("Unexpected response format.");
+                        document.getElementById("wallet-balance").textContent = "N/A";
+                    }
+                } else {
+                    alert(data.error || "Portfolio not found for the given PAN.");
+                    document.getElementById("wallet-balance").textContent = "0.00";
+                }
+            } catch (error) {
+                console.error("Error fetching portfolio:", error);
+                alert("Failed to fetch portfolio. Please try again.");
+                document.getElementById("wallet-balance").textContent = "Error";
+            }
+        }
+
+        function updatePrice() {
+            const selectedOption = document.getElementById("preipo").selectedOptions[0];
+            if (!selectedOption) return;
+
+            const price = Number(selectedOption.getAttribute("data-price"));
+            document.getElementById("share-price").textContent = price;
+
+            // Dynamically update the input field constraints
+            const investmentInput = document.getElementById("investment");
+            investmentInput.value = "";  // Reset input value
+            investmentInput.min = price; // Set minimum value
+            investmentInput.step = price; // Set step to ensure multiples
+            investmentInput.placeholder = `Enter amount in multiples of ₹${price}`;
+        }
+
+
+        async function tokenizeInvestment() {
+            let amount = Number(document.getElementById("investment").value);
+            const selectedOption = document.getElementById("preipo").selectedOptions[0];
+
+            if (!selectedOption) {
+                alert("Please select a Pre-IPO company.");
+                return;
+            }
+
+            const sharePrice = Number(selectedOption.getAttribute("data-price"));
+
+            // Ensure the investment is a multiple of the share price
+            if (amount % sharePrice !== 0) {
+                alert(`Investment amount must be a multiple of ₹${sharePrice}.`);
+                return;
+            }
+
+            let tokens = amount / sharePrice; // Calculate number of tokens
+
+            if (!walletAddress) {
+                alert("Please connect your wallet first.");
+                return;
+            }
+
+            try {
+                const response = await window.aptos.signAndSubmitTransaction({
+                    type: "entry_function_payload",
+                    function: "pre_ipo::Tokenization::mint_tokens",
+                    arguments: [walletAddress, tokens],
+                });
+
+                document.getElementById("tokenDisplay").innerText = `You own ${tokens} tokens of ${selectedOption.value}.`;
+            } catch (error) {
+                console.error("Transaction failed:", error);
+                alert("Tokenization failed.");
+            }
+        }
+
+
+    </script>    
+
+</body>
+</html>

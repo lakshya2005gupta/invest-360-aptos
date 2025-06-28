@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RD Calculator</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Dark theme with green gradient background */
+    body {
+      background: linear-gradient(to bottom, #1e3a34, #121212);
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    
+    /* Main container styling */
+    .container {
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 600px;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: #4caf50;
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-size: 1rem;
+      text-align: left;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #4caf50;
+      border-radius: 6px;
+      background: #222;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 4%;
+    }
+    
+    button {
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+      width: 48%;
+    }
+    
+    button:hover {
+      transform: scale(1.05);
+      background: #45a049;
+    }
+    
+    .result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-height: 1.4em; /* Reserve space for the result */
+    }
+    
+    canvas {
+      margin-top: 30px;
+      background: #222;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    
+    .info {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #ccc;
+      text-align: left;
+      line-height: 1.5;
+    }
+    
+    .info h2 {
+      color: #4caf50;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>RD Calculator</h1>
+    <form id="rdForm">
+	<label for="monthly_deposit">Monthly Deposit (₹):</label>
+	<input type="number" id="monthly_deposit" placeholder="Enter monthly deposit" required min="0">
+
+	<label for="rate">Annual Interest Rate (%):</label>
+	<input type="number" id="rate" placeholder="Enter interest rate" required min="0">
+
+	<label for="months">Duration (Months):</label>
+	<input type="number" id="months" placeholder="Enter number of months" required min="1">
+      
+      <div class="btn-group">
+        <button type="button" onclick="calculateRD()">Calculate</button>
+        <button type="button" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+    <div class="result" id="result"></div>
+    <!-- Chart Canvas -->
+    <canvas id="rdChart" width="400" height="250"></canvas>
+    
+    <!-- Informational Section -->
+    <div class="info">
+      <h2>How RD Calculation Works</h2>
+      <p>
+        This calculator uses the compound interest formula for recurring deposits:
+        <em>
+          Maturity = Monthly_Deposit × [((1 + R/N)^(N×t) – 1) / (1 – (1 + R/N)^(-1))]
+        </em>,
+        where R is the annual rate (in decimal), N is 12 (for monthly compounding), and t is the duration in years.
+      </p>
+      <p>
+        The chart above shows the growth of your deposit month-by-month.
+      </p>
+    </div>
+  </div>
+  
+  <script>
+    let rdChart;
+    
+    function calculateRD() {
+      const monthlyDeposit = parseFloat(document.getElementById('monthly_deposit').value);
+      const rate = parseFloat(document.getElementById('rate').value);
+      const months = parseFloat(document.getElementById('months').value);
+      
+      // Validate input: all fields should be valid and positive.
+      if (isNaN(monthlyDeposit) || isNaN(rate) || isNaN(months) || monthlyDeposit <= 0 || months <= 0 || rate < 0) {
+        document.getElementById('result').textContent = 'Please enter valid positive numbers in all fields.';
+        return;
+      }
+      
+      let maturity;
+      // Handle zero interest rate separately.
+      if (rate === 0) {
+        maturity = monthlyDeposit * months;
+      } else {
+        const R = rate / 100;  // Convert rate to decimal
+        const N = 12;          // Monthly compounding
+        const t = months / 12; // Convert months to years
+        
+        // Calculate RD maturity using the compound interest formula:
+        // maturity = monthly_deposit * ((1 + R/N)^(N*t) - 1) / (1 - (1 + R/N)^(-1))
+        const numerator = Math.pow(1 + R / N, N * t) - 1;
+        const denominator = 1 - Math.pow(1 + R / N, -1);
+        maturity = monthlyDeposit * (numerator / denominator);
+      }
+      
+      const roundedMaturity = Number(maturity.toFixed(2));
+      document.getElementById('result').textContent = 'Maturity Amount: ₹' + roundedMaturity;
+      
+      // Generate monthly maturity values for chart visualization
+      const labels = [];
+      const data = [];
+      for (let m = 0; m <= months; m++) {
+        let currentValue;
+        if (rate === 0) {
+          currentValue = monthlyDeposit * m;
+        } else {
+          const R = rate / 100;
+          const t = m / 12;
+          const num = Math.pow(1 + R / 12, 12 * t) - 1;
+          const den = 1 - Math.pow(1 + R / 12, -1);
+          currentValue = monthlyDeposit * (num / den);
+        }
+        labels.push(m);
+        data.push(Number(currentValue.toFixed(2)));
+      }
+      
+      updateChart(labels, data);
+    }
+    
+    function updateChart(labels, data) {
+      const ctx = document.getElementById('rdChart').getContext('2d');
+      if(rdChart) {
+        rdChart.destroy();
+      }
+      rdChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'RD Growth (₹)',
+            data: data,
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+            borderColor: '#4caf50',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time (Months)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Amount (₹)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    function resetForm() {
+      document.getElementById('rdForm').reset();
+      document.getElementById('result').textContent = '';
+      if(rdChart) {
+        rdChart.destroy();
+      }
+    }
+  </script>
+</body>
+</html>

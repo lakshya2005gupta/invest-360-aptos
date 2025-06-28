@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FD Calculator</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Dark theme with green gradient background */
+    body {
+      background: linear-gradient(to bottom, #1e3a34, #121212);
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    
+    /* Main container styling */
+    .container {
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 600px;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: #4caf50;
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-size: 1rem;
+      text-align: left;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #4caf50;
+      border-radius: 6px;
+      background: #222;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    
+    button {
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+      width: 48%;
+    }
+    
+    button:hover {
+      transform: scale(1.05);
+      background: #45a049;
+    }
+    
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 4%;
+    }
+    
+    .result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-height: 1.4em;
+    }
+    
+    canvas {
+      margin-top: 30px;
+      background: #222;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    
+    .info {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #ccc;
+      text-align: left;
+      line-height: 1.5;
+    }
+    
+    .info h2 {
+      color: #4caf50;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FD Calculator</h1>
+    <form id="fdForm">
+	<label for="principal">Principal Amount (₹):</label>
+	<input type="number" id="principal" placeholder="Enter principal amount" required min="0">
+
+	<label for="rate">Annual Interest Rate (%):</label>
+	<input type="number" id="rate" placeholder="Enter interest rate" required min="0">
+
+	<label for="time">Time (Months):</label>
+	<input type="number" id="time" placeholder="Enter duration in months" required min="1">
+		  
+      <div class="btn-group">
+        <button type="button" onclick="calculateFD()">Calculate</button>
+        <button type="button" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+    <div class="result" id="result"></div>
+    <!-- Chart Canvas -->
+    <canvas id="fdChart" width="400" height="250"></canvas>
+    
+    <!-- Informational Section -->
+    <div class="info">
+      <h2>How FD Calculation Works</h2>
+      <p>
+        This calculator uses the simple interest formula:
+        <em>Maturity = Principal + (Principal × Rate × Time / 1200)</em>.
+        The interest is calculated on the principal over the specified duration (in months) with the annual rate provided.
+      </p>
+      <p>
+        The chart above visualizes how the maturity amount increases month-by-month.
+      </p>
+    </div>
+  </div>
+  
+  <script>
+    let chart;
+    
+    function calculateFD() {
+      const principal = parseFloat(document.getElementById('principal').value);
+      const rate = parseFloat(document.getElementById('rate').value);
+      const time = parseFloat(document.getElementById('time').value);
+      
+      // Input validation
+      if (isNaN(principal) || isNaN(rate) || isNaN(time) || principal <= 0 || time <= 0 || rate < 0) {
+        document.getElementById('result').textContent = 'Please enter valid positive numbers.';
+        return;
+      }
+      
+      // Calculate FD maturity using simple interest formula:
+      // maturity = principal + (principal * rate * time / 1200)
+      const maturity = principal + (principal * rate * time / 1200);
+      const roundedMaturity = Number(maturity.toFixed(2));
+      
+      document.getElementById('result').textContent = 'Maturity Amount: ₹' + roundedMaturity;
+      
+      // Generate monthly maturity values for graph visualization
+      const labels = [];
+      const data = [];
+      for (let m = 0; m <= time; m++) {
+        let monthlyAmount = principal + (principal * rate * m / 1200);
+        labels.push(m);
+        data.push(Number(monthlyAmount.toFixed(2)));
+      }
+      
+      updateChart(labels, data);
+    }
+    
+    function updateChart(labels, data) {
+      const ctx = document.getElementById('fdChart').getContext('2d');
+      if(chart) {
+        chart.destroy();
+      }
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'FD Growth (₹)',
+            data: data,
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+            borderColor: '#4caf50',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time (Months)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Amount (₹)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    function resetForm() {
+      document.getElementById('fdForm').reset();
+      document.getElementById('result').textContent = '';
+      if(chart) {
+        chart.destroy();
+      }
+    }
+  </script>
+</body>
+</html>

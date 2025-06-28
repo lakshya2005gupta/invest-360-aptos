@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamic Investment Baskets</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Dynamic Investment Baskets</h2>
+    <label for="currentWealth">Current Wealth:</label>
+    <input type="number" id="currentWealth" placeholder="Enter your current wealth">
+
+    <label for="targetWealth">Target Wealth:</label>
+    <input type="number" id="targetWealth" placeholder="Enter your target wealth">
+
+    <label for="timeFrame">Time Frame (years):</label>
+    <input type="number" id="timeFrame" placeholder="Years to reach target">
+
+    <label for="investmentType">Investment Type:</label>
+    <select id="investmentType">
+      <option value="Lump-Sum" selected>Lump-Sum</option>
+      <option value="SIP">SIP</option>
+    </select>
+
+    <button onclick="calculateInvestment()">Calculate Investment Plan</button>
+
+    <div id="overallResults" class="results" style="display:none;">
+      <h3>Overall Plan Details</h3>
+      <p><strong>Required CAGR:</strong> <span id="requiredCAGR"></span>%</p>
+      <p><strong>Market Scenarios:</strong></p>
+      <ul id="marketScenarios"></ul>
+      <p id="feasibility"></p>
+      <p id="investmentAdvice"></p>
+    </div>
+
+    <div id="basketResults" class="results"></div>
+  </div>
+
+  <script>
+    function calculateInvestment() {
+      let currentWealth = parseFloat(document.getElementById("currentWealth").value);
+      let targetWealth = parseFloat(document.getElementById("targetWealth").value);
+      let timeFrame = parseInt(document.getElementById("timeFrame").value);
+      let investmentType = document.getElementById("investmentType").value;
+
+      if (isNaN(currentWealth) || isNaN(targetWealth) || isNaN(timeFrame) || timeFrame <= 0) {
+        alert("Please enter valid input values.");
+        return;
+      }
+
+      fetch("http://127.0.0.1:5000/calculate-baskets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentWealth, targetWealth, timeFrame, investmentType })
+      })
+      .then(response => response.json())
+      .then(data => {
+        displayOverallResults(data);
+        displayBasketResults(data.baskets);
+      })
+      .catch(error => console.error("Error:", error));
+    }
+
+    function displayOverallResults(data) {
+      document.getElementById("overallResults").style.display = "block";
+      document.getElementById("requiredCAGR").textContent = data.requiredCAGR;
+      
+      // Market scenarios
+      const scenariosList = document.getElementById("marketScenarios");
+      scenariosList.innerHTML = "";
+      for (let key in data.marketScenarios) {
+        const li = document.createElement("li");
+        li.textContent = `${key}: ${data.marketScenarios[key]}%`;
+        scenariosList.appendChild(li);
+      }
+
+      // Feasibility & Advice
+      document.getElementById("feasibility").textContent = data.feasibility.warning ? data.feasibility.warning : "";
+      document.getElementById("investmentAdvice").textContent = data.investmentAdvice;
+    }
+
+    function displayBasketResults(baskets) {
+      const basketResultsDiv = document.getElementById("basketResults");
+      basketResultsDiv.innerHTML = "<h3>Investment Baskets</h3>";
+
+      for (let riskLevel in baskets) {
+        const basket = baskets[riskLevel];
+        const basketDiv = document.createElement("div");
+        basketDiv.classList.add("basket");
+
+        // Basket header
+        const header = document.createElement("h4");
+        header.textContent = `${riskLevel} Risk Basket`;
+        basketDiv.appendChild(header);
+
+        // Basket details
+        const detailsUl = document.createElement("ul");
+        detailsUl.innerHTML = `
+          <li><strong>Expected Return:</strong> ${basket.expectedReturn}%</li>
+          <li><strong>Final Wealth:</strong> ${basket.finalWealth}</li>
+          <li><strong>Goal Achieved:</strong> ${basket.goalAchieved ? "Yes" : "No"}</li>
+          <li><strong>Shortfall:</strong> ${basket.shortfall}</li>
+        `;
+        basketDiv.appendChild(detailsUl);
+
+        // Allocation details
+        const allocationUl = document.createElement("ul");
+        allocationUl.innerHTML = `<strong>Allocation:</strong>`;
+        for (let asset in basket.allocation) {
+          const li = document.createElement("li");
+          li.textContent = `${asset}: ${basket.allocation[asset]}%`;
+          allocationUl.appendChild(li);
+        }
+        basketDiv.appendChild(allocationUl);
+
+        // Create canvas for wealth projection chart
+        const canvas = document.createElement("canvas");
+        canvas.id = `chart-${riskLevel}`;
+        canvas.classList.add("chart-container");
+        basketDiv.appendChild(canvas);
+
+        basketResultsDiv.appendChild(basketDiv);
+
+        // Render chart for this basket's wealth projection
+        renderChart(basket.wealthProjection, canvas.id, `${riskLevel} Risk Wealth Projection`);
+      }
+    }
+
+    function renderChart(data, canvasId, chartLabel) {
+      const ctx = document.getElementById(canvasId).getContext("2d");
+      const labels = data.map(point => `Year ${point.year}`);
+      const values = data.map(point => point.wealth);
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: chartLabel,
+            data: values,
+            borderColor: "rgb(75, 192, 192)",
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

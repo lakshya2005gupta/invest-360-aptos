@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Portfolio Report</title>
+  <link rel="stylesheet" href="infostyles.css">
+  <style>
+    /* Styling for the green box for positive messages */
+    .good {
+      display: inline-block; /* Only wraps the text */
+      background-color: #d4edda; /* light green background */
+      border: 1px solid #c3e6cb; /* green border */
+      color: #155724; /* dark green text */
+      padding: 4px 8px; /* Adjust padding as needed */
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav>
+    <button onclick="window.location.href='recom.html'" class="nav-button">
+
+      Risk Summary
+    </button>
+</nav>
+  
+  <header>
+    <h1>Portfolio Report</h1>
+    <p>Your personalized portfolio report is generated below.</p>
+  </header>
+  
+  <!-- Report Section -->
+  <section id="report-section">
+    <div id="report"></div>
+  </section>
+  <!-- <section id="report"></section> -->
+  <script>
+    const reportDiv = document.getElementById('report');
+
+    // Utility: Get stored PAN (assumed to be saved at login)
+    const storedPAN = localStorage.getItem('userPAN');
+    if (!storedPAN) {
+      reportDiv.innerHTML = `<p class="error">No PAN found. Please enter that.</p>`;
+    }
+
+    // Fetch portfolio data from backend using /getPortfolio endpoint.
+    async function fetchPortfolio(pan) {
+      try {
+        const response = await fetch('http://localhost:5000/getPortfolio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pan: pan })
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Server error');
+        }
+        return await response.json();
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    // Fetch bad stock report from backend using /checkBadStock endpoint.
+    async function fetchBadStockReport(stockName) {
+      try {
+        const response = await fetch('http://localhost:5000/checkBadStock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock_name: stockName })
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Server error');
+        }
+        return await response.json();
+      } catch (error) {
+        return { status: "error", message: `Error checking bad stock: ${error.message}` };
+      }
+    }
+
+    // Fetch bad mutual fund report from backend using /checkBadMutualFund endpoint.
+    async function fetchBadMutualFundReport(mutualFundName) {
+      try {
+        const response = await fetch('http://localhost:5000/checkBadMutualFund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mutual_fund_name: mutualFundName })
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Server error');
+        }
+        return await response.json();
+      } catch (error) {
+        return { status: "error", message: `Error checking bad mutual fund: ${error.message}` };
+      }
+    }
+
+    // Generate a detailed report from portfolio data and backend analyses.
+    async function generateReport(data) {
+      const totalValueRounded = Math.round(data.total_portfolio_value);
+      const formattedValue = "₹" + totalValueRounded.toLocaleString('en-IN');
+      let html = `<h2>Portfolio Overview</h2>
+                  <p>Total Portfolio Value: <strong>${formattedValue}</strong></p>`;
+
+      // Loop through each asset category.
+      for (const category in data.assets) {
+        let catData = data.assets[category];
+        html += `<h3>${category}</h3>`;
+        
+        if (category === "Stocks") {
+          html += `<p>Your stock holdings have high potential returns and risk.</p>`;
+          let badStockFound = false;
+          // Check each stock for issues.
+          for (const stock of catData.holdings) {
+            const badStockReport = await fetchBadStockReport(stock.name);
+            if (badStockReport.status === "bad") {
+              html += `<p class="alert">${badStockReport.message}</p>`;
+              badStockFound = true;
+            }
+          }
+          // If no bad stocks were found, display a positive green box.
+          if (!badStockFound) {
+            html += `<div class="good">All stocks appear to be well performing</div>`;
+          }
+        }
+        else if (category === "Mutual Funds") {
+          html += `<p>Mutual funds provide diversification and professional management.</p>`;
+          let badFundFound = false;
+          // Check each mutual fund for issues.
+          for (const fund of catData.holdings) {
+            const badMutualFundReport = await fetchBadMutualFundReport(fund.name);
+            if (badMutualFundReport.status === "bad") {
+              html += `<p class="alert">${badMutualFundReport.message}</p>`;
+              badFundFound = true;
+            }
+          }
+          // If no bad mutual funds were found, display a positive green box.
+          if (!badFundFound) {
+            html += `<div class="good">All mutual funds are in good health</div>`;
+          }
+        }
+        else if (category === "ETF") {
+          html += `<p>ETFs like Gold and Silver act as a hedge against inflation and reduce overall volatility.</p>`;
+        }
+        else if (category === "Fixed Deposits") {
+          html += `<p>Fixed Deposits offer stable, predictable returns.</p>`;
+          catData.holdings.forEach(holding => {
+            if (holding.interest_rate < 5) {
+              html += `<p class="alert">Alert: FD from ${holding.bank} offers ${holding.interest_rate}% (below recommended threshold).</p>`;
+            }
+          });
+        }
+        else if (category === "Recurring Deposits") {
+          html += `<p>Recurring Deposits encourage regular savings.</p>`;
+          catData.holdings.forEach(holding => {
+            if (holding.interest_rate < 5) {
+              html += `<p class="alert">Alert: RD from ${holding.bank} offers ${holding.interest_rate}% (considered low).</p>`;
+            }
+          });
+        }
+        else if (category === "Government Schemes") {
+          html += `<p>Government schemes offer safety and tax benefits.</p>`;
+          catData.holdings.forEach(holding => {
+            if (holding.interest_rate < 6) {
+              html += `<p class="alert">Alert: Scheme ${holding.scheme} offers ${holding.interest_rate}% (below 5%).</p>`;
+            }
+          });
+        }
+        else {
+          html += `<p>No specific insights for this category.</p>`;
+        }
+      }
+      return html;
+    }
+
+    // Fetch portfolio data and generate the report.
+    async function fetchAndGenerateReport() {
+      const pan = storedPAN;
+      try {
+        const data = await fetchPortfolio(pan);
+        const reportHtml = await generateReport(data);
+        reportDiv.innerHTML = reportHtml;
+      } catch (error) {
+        reportDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+    
+    // Generate the report automatically if PAN is stored.
+    if (storedPAN) {
+      reportDiv.innerHTML = "<p>Fetching portfolio report...</p>";
+      fetchAndGenerateReport();
+    }
+  </script>
+</body>
+</html>

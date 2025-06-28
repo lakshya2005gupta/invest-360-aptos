@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI-Based Investment Recommendations</title>
+  <link rel="stylesheet" href="recomstyles.css">
+  <!-- Include Chart.js for graphical representations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav>
+    <div>
+      <button onclick="window.location.href='info.html'" class="nav-button active">
+        Details & Report
+      </button>
+    </div>
+  </nav>
+
+  <header>
+    <h1>AI-Based Investment Recommendations</h1>
+    <p>Receive personalized risk analysis and recommendations based on your portfolio.</p>
+  </header>
+  
+  <!-- Form for PAN input -->
+  <section id="input-section">
+    <form id="recommendForm">
+      <label for="pan">Enter Your PAN:</label>
+      <input type="text" id="pan" name="pan" placeholder="e.g., ABCDE1234F" required>
+      <button type="submit">Get Recommendations</button>
+    </form>
+  </section>
+  
+  <!-- Results Section -->
+  <section id="results-section">
+    <!-- Risk Analysis Summary -->
+    <div id="result"></div>
+    
+    <!-- Graphical Risk Analysis -->
+    <div class="chart-container">
+      <canvas id="riskChart"></canvas>
+    </div>
+    
+    <!-- Detailed Written Report -->
+    <div id="report"></div>
+    
+    <!-- AI-Based Investment Recommendations -->
+    <div id="recommendations"></div>
+  </section>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const form = document.getElementById('recommendForm');
+      const panInput = document.getElementById('pan');
+      const resultDiv = document.getElementById('result');
+      const reportDiv = document.getElementById('report');
+      const recDiv = document.getElementById('recommendations');
+      const ctx = document.getElementById('riskChart').getContext('2d');
+      const inputSection = document.getElementById('input-section');
+      let riskChart;
+  
+      // Fetch PAN from local storage
+      const storedPAN = localStorage.getItem('userPAN');
+  
+      if (storedPAN) {
+        inputSection.style.display = 'none'; // Hide input section
+        fetchAndDisplayRecommendations(storedPAN); // Auto-fetch data
+      }
+  
+      async function fetchAndDisplayRecommendations(pan) {
+        resultDiv.innerHTML = "<p class='loading'>⏳ Fetching recommendations...</p>";
+        reportDiv.innerHTML = "";
+        recDiv.innerHTML = "";
+  
+        try {
+          const response = await fetch('http://localhost:5000/getRecommendations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pan: pan })
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error');
+          }
+  
+          const data = await response.json();
+  
+          // Check for specific error: "No portfolio found for the given PAN"
+          if (data.error && data.error === "No portfolio found for the given PAN") {
+            resultDiv.innerHTML = ""; // Clear loading message
+            alert(data.error);
+            localStorage.removeItem('userPAN');
+            inputSection.style.display = 'block'; // Show input section again
+            return;
+          }
+  
+          if (data.error) {
+            resultDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+            return;
+          }
+  
+          resultDiv.innerHTML = ` 
+            <h2>Risk Analysis Summary</h2>
+            <p><strong>Risk Score:</strong> ${data.risk_analysis.risk_score}</p>
+            <p><strong>Risk Level:</strong> ${data.risk_analysis.risk_level}</p>
+          `;
+  
+          updateChart(data.risk_analysis.risk_score, data.risk_analysis.risk_level);
+          reportDiv.innerHTML = generateReport(data.risk_analysis.risk_score, data.risk_analysis.risk_level);
+          recDiv.innerHTML = generateRecommendationsList(data.recommendations);
+        } catch (error) {
+          resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+          // Optionally, show the input section again if an error occurs
+          inputSection.style.display = 'block';
+        }
+      }
+  
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const pan = panInput.value.trim().toUpperCase();
+        localStorage.setItem('userPAN', pan); // Store PAN
+        inputSection.style.display = 'none'; // Hide input section
+        fetchAndDisplayRecommendations(pan);
+      });
+  
+      function updateChart(riskScore, riskLevel) {
+        const scorePercent = Math.round(riskScore * 100);
+        const remaining = 100 - scorePercent;
+  
+        let chartColor = riskLevel === "High Risk" ? 'rgba(255, 99, 132, 0.7)' :
+                        riskLevel === "Moderate Risk" ? 'rgba(255, 205, 86, 0.7)' :
+                        'rgba(75, 192, 192, 0.7)';
+  
+        const data = {
+          labels: ['Risk Score (%)', 'Remaining (%)'],
+          datasets: [{
+            data: [scorePercent, remaining],
+            backgroundColor: [chartColor, '#e0e0e0'],
+            hoverOffset: 4
+          }]
+        };
+  
+        if (riskChart) {
+          riskChart.data = data;
+          riskChart.update();
+        } else {
+          riskChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' },
+                title: { display: true, text: 'Portfolio Risk Score' }
+              }
+            }
+          });
+        }
+      }
+  
+      function generateReport(riskScore, riskLevel) {
+        const explanations = {
+          "High Risk": "Your portfolio is highly aggressive, with a significant allocation in volatile assets. Consider balancing your investments with safer, fixed-income instruments.",
+          "Moderate Risk": "Your portfolio has a balanced risk profile. Maintain diversification and periodically review your asset allocation to adapt to market changes.",
+          "Low Risk": "Your portfolio is conservative with low volatility. You might consider introducing a small percentage of higher growth assets to potentially enhance returns."
+        };
+  
+        return `
+          <h2>Risk Analysis Report</h2>
+          <p><strong>Risk Score:</strong> ${riskScore} (scale 0 to 1)</p>
+          <p><strong>Risk Level:</strong> ${riskLevel}</p>
+          <p>${explanations[riskLevel]}</p>
+          <h3>Key Insights:</h3>
+          <ul>
+            <li>A higher risk score indicates a larger exposure to volatile assets.</li>
+            <li>A lower risk score suggests a more conservative and stable portfolio.</li>
+            <li>Review your asset distribution to ensure it aligns with your financial goals and risk tolerance.</li>
+          </ul>
+        `;
+      }
+  
+      function generateRecommendationsList(recommendations) {
+        return `<h2>Investment Recommendations</h2><ul>${recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>`;
+      }
+    });
+  </script>
+  
+</body>
+</html>

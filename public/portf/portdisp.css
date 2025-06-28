@@ -1,0 +1,134 @@
+/* General Page Styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: url('bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Container */
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 850px;
+    text-align: center;
+}
+
+/* Portfolio Value Heading */
+#total-portfolio-value {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ff8c00, #ffb400);
+    color: white;
+    padding: 14px;
+    border-radius: 8px;
+    display: inline-block;
+    box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
+}
+
+/* Space for Graphical Analysis */
+#chart-container {
+    margin-top: 20px; /* Space below the portfolio value */
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart */
+#portfolio-chart {
+    max-width: 100%;
+    height: 300px;
+}
+
+/* Category Headings */
+h3 {
+    background: #0077b6;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: background 0.3s ease-in-out;
+}
+
+h3:hover {
+    background: #005a8d;
+}
+
+/* Portfolio Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ff8c00;
+    text-align: left;
+    font-size: 15px;
+}
+
+/* Table Header */
+th {
+    background: linear-gradient(135deg, #0077b6, #0096c7);
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Table Cells */
+td {
+    background-color: rgba(255, 247, 215, 0.9);
+    transition: background 0.2s ease-in-out;
+}
+
+/* Alternating Row Colors */
+tr:nth-child(even) td {
+    background-color: rgba(235, 245, 255, 0.9);
+}
+
+/* Hover Effect */
+tr:hover td {
+    background: rgba(200, 230, 255, 0.9);
+    transition: 0.3s ease-in-out;
+}
+
+/* Error Message */
+.error {
+    color: #d35400;
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+
+    th, td {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    #total-portfolio-value {
+        font-size: 20px;
+        padding: 10px;
+    }
+}

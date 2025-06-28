@@ -1,0 +1,110 @@
+/* Apply dark theme with bluish-green gradient */
+body {
+  background: linear-gradient(to bottom, #1e3a34, #121212);
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Center content */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* Typography */
+h2 {
+  font-size: 1.8rem;
+  color: #3fb6a8;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 1rem;
+  color: #ddd;
+  margin-bottom: 15px;
+}
+
+/* Input Fields */
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #3fb6a8;
+  border-radius: 6px;
+  background: #222;
+  color: #ffffff;
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* Input Focus Effect */
+input:focus, select:focus {
+  outline: none;
+  border-color: #35a89e;
+  box-shadow: 0 0 8px rgba(63, 182, 168, 0.8);
+}
+
+/* Button Styling */
+button {
+  background: #3fb6a8;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+  width: 100%;
+}
+
+/* Button Hover Effect - No Size Change */
+button:hover {
+  background: #35a89e;
+}
+
+/* Wallet Address Display */
+#walletAddress {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #3fb6a8;
+  margin-top: 10px;
+}
+
+/* Wallet Balance Display */
+.balance {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3fb6a8;
+  margin-top: 10px;
+}
+
+/* Tokenization Result Display */
+.tokens {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ffeb3b;
+  margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+      width: 90%;
+  }
+}

@@ -1,0 +1,143 @@
+/* Apply dark theme with green gradient */
+body {
+  background: linear-gradient(to bottom, #1e3a34, #121212);
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Center content */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  max-width: 900px;
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  margin-top: 40px;
+}
+
+/* Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+  background: rgba(30, 30, 30, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+label {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  font-size: 1rem;
+}
+
+/* Button Styling */
+button {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+/* Pop-up Effect on Hover */
+button:hover {
+  transform: scale(1.1);
+  background: #45a049;
+}
+
+/* Layout for results section */
+.results-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* Pie Chart - Centered */
+.chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;  /* Full width to ensure centering */
+  margin-top: 20px;
+}
+
+/* Increase Pie Chart Size */
+canvas {
+  width: 300px !important; 
+  height: 300px !important;
+}
+
+
+
+
+
+/* Recommendations (Right Side) */
+.recommendations-container {
+  flex: 1;
+  max-width: 55%;
+  padding-left: 20px;
+}
+
+h2 {
+  color: #ffffff;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: rgba(76, 175, 80, 0.2);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .results-container {
+      flex-direction: column;
+      align-items: center;
+  }
+  
+  .chart-container, .recommendations-container {
+      max-width: 100%;
+      padding: 10px 0;
+  }
+  
+  canvas {
+      width: 150px !important;
+      height: 150px !important;
+  }
+}

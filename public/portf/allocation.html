@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Allocation Report</title>
+  <link rel="stylesheet" href="allocationstyles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Asset Allocation Report</h2>
+    <div id="panInputDiv">
+      <label for="panInput">Enter PAN:</label>
+      <input type="text" id="panInput" placeholder="e.g. ABCDE1234F" />
+      <button onclick="fetchPortfolio()">Get Report</button>
+    </div>
+    <canvas id="allocationChart"></canvas>
+    <div id="insights" class="insights"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const storedPAN = localStorage.getItem("userPAN");
+      const panInputDiv = document.getElementById("panInputDiv");
+      if (storedPAN) {
+        document.getElementById("panInput").value = storedPAN;
+        panInputDiv.style.display = "none";
+        fetchPortfolio();
+      }
+    });
+
+    async function fetchPortfolio() {
+      const panInputDiv = document.getElementById("panInputDiv");
+      const panInput = document.getElementById("panInput");
+      const pan = panInput.value.trim();
+      const button = document.querySelector("#panInputDiv button");
+      const insightsDiv = document.getElementById("insights");
+
+      if (!pan) {
+        alert("Please enter a valid PAN.");
+        return;
+      }
+
+      // Hide PAN input section for now
+      panInputDiv.style.display = "none";
+      
+      // Show loading message and disable button
+      insightsDiv.innerHTML = `<p class="loading">⏳ Fetching data, please wait...</p>`;
+      button.disabled = true;
+      button.textContent = "Fetching...";
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/getPortfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pan })
+        });
+        const data = await response.json();
+
+        // If no portfolio is found, clear loading message, alert the user, and show the input
+        if (data.error && data.error === "No portfolio found for the given PAN") {
+          insightsDiv.innerHTML = ""; // Clear loading message
+          alert(data.error);
+          localStorage.removeItem("userPAN");
+          panInputDiv.style.display = "block";
+          return;
+        }
+
+        // Otherwise, store the PAN and render data
+        localStorage.setItem("userPAN", pan);
+        renderChart(data);
+        generateRecommendations(data);
+      } catch (error) {
+        console.error("Error fetching portfolio:", error);
+        insightsDiv.innerHTML = ""; // Clear loading message on error
+        alert("Failed to fetch portfolio data. Please try again.");
+        panInputDiv.style.display = "block";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Get Report";
+      }
+    }
+
+    function renderChart(data) {
+      const ctx = document.getElementById("allocationChart").getContext("2d");
+      const categories = Object.keys(data.assets);
+      const values = categories.map(cat => data.assets[cat].total_value);
+      const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#9C27B0", "#FF9800"];
+
+      if (window.allocationChart instanceof Chart) {
+        window.allocationChart.destroy();
+      }
+
+      window.allocationChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: categories,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, categories.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || "";
+                  const value = context.parsed;
+                  const total = context.chart._metasets[context.datasetIndex].total;
+                  const percentage = ((value / total) * 100).toFixed(2);
+                  return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function generateRecommendations(data) {
+      const insightsDiv = document.getElementById("insights");
+      let recommendationsHTML = "";
+      const totalValue = data.total_portfolio_value;
+      
+      let highExposure = [];
+      let lowExposure = [];
+      
+      Object.entries(data.assets).forEach(([category, info]) => {
+        const allocationPerc = (info.total_value / totalValue) * 100;
+        if (allocationPerc > 40) {
+          highExposure.push(`${category} (${allocationPerc.toFixed(2)}%)`);
+        } else if (allocationPerc < 10) {
+          lowExposure.push(`${category} (${allocationPerc.toFixed(2)}%)`);
+        }
+      });
+      
+      if (highExposure.length > 0) {
+        recommendationsHTML += `
+          <div class="recommendation">
+            <p>⚠️ High Exposure: You have significant allocation in ${highExposure.join(", ")}. 
+            Consider diversifying to mitigate risk.</p>
+          </div>
+        `;
+      }
+      
+      if (lowExposure.length > 0) {
+        recommendationsHTML += `
+          <div class="recommendation">
+            <p>ℹ️ Low Exposure: Your allocation in ${lowExposure.join(", ")} is relatively low. 
+            You might consider exploring these asset classes for a balanced portfolio.</p>
+          </div>
+        `;
+      }
+      
+      if (!highExposure.length && !lowExposure.length) {
+        recommendationsHTML = `<div class="recommendation"><p class="balanced">✅ Your portfolio appears balanced!</p></div>`;
+      }
+      
+      insightsDiv.innerHTML = recommendationsHTML;
+    }
+  </script>
+</body>
+</html>

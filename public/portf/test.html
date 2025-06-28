@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Value</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Check Your Portfolio Value</h2>
+    <input type="text" id="panInput" placeholder="Enter PAN number">
+    <button onclick="getPortfolio()">Get Portfolio Value</button>
+
+    <div id="result"></div>
+
+    <script>
+        function getPortfolio() {
+            const pan = document.getElementById("panInput").value.trim();
+            if (!pan) {
+                alert("Please enter a valid PAN number.");
+                return;
+            }
+
+            fetch("http://127.0.0.1:5000/getPortfolio", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pan: pan })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("result").innerText = "Error: " + data.error;
+                } else {
+                    document.getElementById("result").innerText = 
+                        "Total Portfolio Value: ₹" + data.total_portfolio_value.toFixed(2);
+                }
+            })
+            .catch(error => {
+                document.getElementById("result").innerText = "Error fetching portfolio.";
+                console.error("Error:", error);
+            });
+        }
+    </script>
+
+</body>
+</html>

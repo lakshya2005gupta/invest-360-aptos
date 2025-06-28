@@ -1,0 +1,120 @@
+/* Global Styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(to bottom, #1d2d29, #0c0c0c);
+  color: #e0e0e0;
+}
+
+header {
+  background: rgba(15, 25, 22, 0.8);
+  padding: 25px 20px;
+  text-align: center;
+  border-bottom: 2px solid rgba(76, 175, 80, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #4caf50;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+/* Main Layout */
+main {
+  padding: 50px 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Card Container */
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+}
+
+/* Elegant Gradient Card */
+.card {
+  background: linear-gradient(135deg, rgba(35, 55, 50, 0.92), rgba(15, 25, 22, 0.9));
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* Card Header */
+.card h3 {
+  background: linear-gradient(to right, #4caf50, #3e8e41);
+  color: #fff;
+  margin: 0;
+  padding: 18px;
+  font-size: 1.4rem;
+  text-align: center;
+  font-weight: 500;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+/* Card Content */
+.card p {
+  padding: 20px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #ccc;
+  flex-grow: 1;
+}
+
+/* Card Button */
+.card a {
+  display: block;
+  background: linear-gradient(to right, #4caf50, #3e8e41);
+  color: #fff;
+  text-align: center;
+  padding: 14px;
+  text-decoration: none;
+  font-weight: bold;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.card a:hover {
+  background: linear-gradient(to right, #3e8e41, #369b36);
+  transform: scale(1.04);
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: rgba(15, 25, 22, 0.8);
+  backdrop-filter: blur(8px);
+  margin-top: 40px;
+  font-size: 0.9rem;
+  border-top: 2px solid rgba(76, 175, 80, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .card {
+    width: 95%;
+  }
+
+  header h1 {
+    font-size: 2rem;
+  }
+}

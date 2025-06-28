@@ -1,0 +1,184 @@
+/* 
+  1) Single dark-green gradient background for the entire page
+  2) Semi-transparent wave overlays so the gradient remains visible
+  3) Overlapping sections with wave shapes for an infographic vibe
+  4) Green accent (#4caf50) to match your theme
+*/
+
+/* Reset and base styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #1e3a34, #121212); /* Original gradient */
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Wave Header: large text, wave overlay at the bottom */
+.wave-header {
+  position: relative;
+  text-align: center;
+  padding: 80px 20px;
+  overflow: hidden; /* Ensures wave is contained */
+}
+.wave-header h1 {
+  font-size: 3rem;
+  color: #4caf50; /* Green accent */
+  z-index: 2;
+  position: relative;
+  margin: 0;
+}
+/* Semi-transparent wave shape overlay so the gradient remains visible */
+.wave-header::before {
+  content: "";
+  position: absolute;
+  bottom: -50px;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  background: rgba(0, 0, 0, 0.2);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+  z-index: 1;
+}
+
+/* Main content area: flex-center horizontally */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Semi-transparent content section overlapping wave header */
+.content {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(20,20,20,0.5); /* So gradient shows through */
+  border-radius: 12px;
+  padding: 30px;
+  margin-top: -60px; /* Overlap wave from the header */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Form styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="number"] {
+  padding: 12px;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  font-size: 1rem;
+}
+
+/* Stock suggestion list */
+#stock-list {
+  background: #222;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 5px;
+  position: relative;
+  z-index: 10;
+}
+.stock-item {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.stock-item:hover {
+  background: #333;
+}
+
+/* Button with subtle hover effect */
+button {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+button:hover {
+  transform: scale(1.05);
+  background: #45a049;
+}
+
+/* Prediction result display */
+#result {
+  margin-top: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  min-height: 1.4em; /* Reserve space even if empty */
+}
+
+/* Disclaimer wave shape from the top (semi-transparent) */
+.disclaimer {
+  position: relative;
+  text-align: center;
+  padding: 60px 20px;
+  width: 100%;
+  max-width: 800px;
+  margin: 40px auto 0;
+}
+.disclaimer::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: rgba(0,0,0,0.2);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+  z-index: -1;
+}
+.disclaimer p {
+  font-size: 0.9rem;
+  color: #ddd;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Responsive for smaller screens */
+@media (max-width: 600px) {
+  .wave-header h1 {
+    font-size: 2rem;
+  }
+  .content {
+    margin-top: -40px;
+  }
+  button {
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+}
