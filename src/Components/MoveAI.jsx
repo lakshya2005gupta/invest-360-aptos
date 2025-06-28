@@ -1,3 +1,4 @@
+//code for MoveAI intergrations with our chatbot 
 import { useState } from "react";
 import axios from "axios";
 import { MessageCircle, Bot, Send, X } from "lucide-react";
